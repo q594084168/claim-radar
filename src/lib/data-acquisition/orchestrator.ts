@@ -5,6 +5,7 @@ import { crawlEpiq } from "./crawlers/epiq";
 import { crawlKroll } from "./crawlers/kroll";
 import { crawlAngeion } from "./crawlers/angeion";
 import { crawlJND } from "./crawlers/jnd";
+import { crawlClaimDepot } from "./crawlers/claimdepot";
 import { ParsedCase } from "./parser";
 
 export interface CrawlResult {
@@ -35,6 +36,7 @@ export async function runAllCrawlers(): Promise<OrchestratorResult> {
     { name: "Kroll", crawl: crawlKroll },
     { name: "Angeion", crawl: crawlAngeion },
     { name: "JND", crawl: crawlJND },
+    { name: "ClaimDepot", crawl: crawlClaimDepot },
   ];
 
   // Run crawlers sequentially to avoid overwhelming servers
