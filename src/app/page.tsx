@@ -111,10 +111,27 @@ export default function HomePage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/simple-claims?limit=200");
+
+      // Check localStorage cache first (1 hour)
+      const cached = localStorage.getItem("claimradar_data");
+      const cacheTime = localStorage.getItem("claimradar_cache_time");
+      const now = Date.now();
+
+      if (cached && cacheTime && (now - parseInt(cacheTime)) < 60 * 60 * 1000) {
+        console.log("Using cached data");
+        setAllClaims(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
+
+      // Fetch fresh data
+      const response = await fetch("/api/static-data");
       const data = await response.json();
       if (data.success) {
         setAllClaims(data.claims);
+        // Cache in localStorage
+        localStorage.setItem("claimradar_data", JSON.stringify(data.claims));
+        localStorage.setItem("claimradar_cache_time", now.toString());
       } else {
         setError("Failed to load data");
       }
