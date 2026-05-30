@@ -369,7 +369,7 @@ function ClaimCard({ claim }: { claim: (typeof MOCK_CLAIMS)[0] }) {
 
   return (
     <Link
-      href={`/${claim.country.toLowerCase()}/${claim.slug}`}
+      href={`/claim/${claim.slug}`}
       className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-5"
     >
       <div className="flex items-start justify-between mb-3">
