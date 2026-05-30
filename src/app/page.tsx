@@ -36,6 +36,40 @@ interface Stats {
   highValueCount: number;
 }
 
+// Fix HTML entities
+function decodeHTMLEntities(text: string): string {
+  const entities: Record<string, string> = {
+    "&#8217;": "'",
+    "&#8216;": "'",
+    "&#8220;": '"',
+    "&#8221;": '"',
+    "&#8211;": "–",
+    "&#8212;": "—",
+    "&#038;": "&",
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&#039;": "'",
+    "&nbsp;": " ",
+  };
+
+  let decoded = text;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replace(new RegExp(entity, "g"), char);
+  }
+  return decoded;
+}
+
+// Format payout amount
+function formatPayout(min: number | null, max: number | null): string {
+  if (!min && !max) return "Varies";
+  if (min === max) return `$${min} Fixed`;
+  if (min && max) return `$${min} - $${max}`;
+  if (min) return `From $${min}`;
+  return `Up to $${max}`;
+}
+
 function getCountryFlag(country: string): string {
   const flags: Record<string, string> = { US: "🇺🇸", CA: "🇨🇦", AU: "🇦🇺" };
   return flags[country] || "🌍";
@@ -57,11 +91,28 @@ function getScoreColor(score: number): string {
   return "text-red-600 bg-red-50";
 }
 
+// Check if title is a digest/news article
+function isDigestArticle(title: string): boolean {
+  const digestPatterns = [
+    /^\d+\s+class action/i,
+    /^\d+\s+settlement/i,
+    /roundup/i,
+    /digest/i,
+    /weekly/i,
+    /monthly/i,
+    /top \d+/i,
+  ];
+  return digestPatterns.some((pattern) => pattern.test(title));
+}
+
 export default function HomePage() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [refreshing, setRefreshing] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -82,7 +133,7 @@ export default function HomePage() {
       }
 
       // Fetch claims
-      const claimsRes = await fetch("/api/enhanced-claims?limit=12");
+      const claimsRes = await fetch("/api/enhanced-claims?limit=50");
       const claimsData = await claimsRes.json();
       if (claimsData.success) {
         setClaims(claimsData.claims);
@@ -93,6 +144,25 @@ export default function HomePage() {
       setLoading(false);
     }
   };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setToast(null);
+    await fetchData();
+    setRefreshing(false);
+    setToast("Data is up to date!");
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Filter claims
+  const filteredClaims = claims.filter((claim) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "no-receipt") return !claim.needReceipt;
+    if (activeFilter === "high-value") return claim.tags?.tags?.includes("high-value");
+    if (activeFilter === "data-breach") return claim.category === "data-breach";
+    if (activeFilter === "class-action") return claim.category === "class-action";
+    return true;
+  });
 
   if (loading) {
     return (
@@ -121,6 +191,13 @@ export default function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+          ✅ {toast}
+        </div>
+      )}
+
       {/* Hero */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl">
@@ -133,11 +210,21 @@ export default function HomePage() {
           No fake claims, no outdated information.
         </p>
         <div className="mt-4 flex justify-center gap-4">
-          <Link href="/dashboard" className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <Link href="/dashboard" className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
             📊 View Dashboard
           </Link>
-          <button onClick={fetchData} className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">
-            🔄 Refresh Data
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium disabled:opacity-50"
+          >
+            {refreshing ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin">⏳</span> Refreshing...
+              </span>
+            ) : (
+              "🔄 Refresh Data"
+            )}
           </button>
         </div>
       </div>
@@ -166,53 +253,102 @@ export default function HomePage() {
 
       {/* Claims Grid */}
       <div className="mb-12">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-gray-900">📋 Latest Claims</h2>
           <Link href="/dashboard" className="text-blue-600 hover:text-blue-500">
             View All →
           </Link>
         </div>
+
+        {/* Filter Pills */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {[
+            { key: "all", label: "All" },
+            { key: "no-receipt", label: "✅ No Receipt" },
+            { key: "high-value", label: "💰 High Value" },
+            { key: "data-breach", label: "🔓 Data Breach" },
+            { key: "class-action", label: "⚖️ Class Action" },
+          ].map((filter) => (
+            <button
+              key={filter.key}
+              onClick={() => setActiveFilter(filter.key)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                activeFilter === filter.key
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {claims.map((claim) => (
-            <div key={claim.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6">
-              <div className="flex items-start justify-between mb-3">
-                <span className="text-2xl">{getCountryFlag(claim.country)}</span>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getScoreColor(claim.score?.total || 0)}`}>
-                  {claim.score?.total || 0}/100
-                </span>
-              </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2">
-                {claim.title}
-              </h3>
-              <div className="space-y-1 text-xs text-gray-500 mb-4">
-                <div className="flex items-center gap-2">
-                  <span>📁</span>
-                  <span>{getCategoryLabel(claim.category)}</span>
-                </div>
-                {claim.estimatedMin && claim.estimatedMax && (
+          {filteredClaims.map((claim) => {
+            const isDigest = isDigestArticle(claim.title);
+
+            return (
+              <div key={claim.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span>💵</span>
-                    <span>${claim.estimatedMin} - ${claim.estimatedMax}</span>
+                    {isDigest ? (
+                      <span className="text-2xl">📰</span>
+                    ) : (
+                      <span className="text-2xl">{getCountryFlag(claim.country)}</span>
+                    )}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      isDigest ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"
+                    }`}>
+                      {isDigest ? "Digest" : claim.sourceName}
+                    </span>
                   </div>
-                )}
-                <div className="flex items-center gap-2">
-                  {claim.needReceipt ? (
-                    <span className="text-orange-500">📋 Receipt needed</span>
-                  ) : (
-                    <span className="text-green-500">✅ No receipt</span>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500">Match Score:</div>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getScoreColor(claim.score?.total || 0)}`}>
+                      {claim.score?.total || 0}/100
+                    </span>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2">
+                  {decodeHTMLEntities(claim.title)}
+                </h3>
+
+                {/* Info */}
+                <div className="space-y-1 text-xs text-gray-500 mb-4">
+                  {!isDigest && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <span>📁</span>
+                        <span>{getCategoryLabel(claim.category)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span>💵</span>
+                        <span>{formatPayout(claim.estimatedMin, claim.estimatedMax)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {claim.needReceipt ? (
+                          <span className="text-orange-500">📋 Receipt needed</span>
+                        ) : (
+                          <span className="text-green-500">✅ No receipt</span>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-gray-200">
+
+                {/* View Details Link */}
                 <Link
                   href={`/claim-detail/${claim.slug}`}
-                  className="w-full flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  className="w-full flex items-center justify-center px-4 py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 transition-colors"
                 >
                   View Details →
                 </Link>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
