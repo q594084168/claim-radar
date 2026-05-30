@@ -130,7 +130,7 @@ export default function DataBreachPage() {
           return (
             <Link
               key={claim.id}
-              href={`/us/${claim.slug}`}
+              href={`/claim/${claim.slug}`}
               className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
             >
               <div className="flex items-start justify-between mb-3">

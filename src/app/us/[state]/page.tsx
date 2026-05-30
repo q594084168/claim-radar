@@ -222,19 +222,19 @@ export default async function StatePage({
       {/* Quick Links */}
       <div className="flex flex-wrap gap-2 mb-8">
         <Link
-          href={`/us/${stateInfo.code.toLowerCase()}/no-receipt`}
+          href={`/claim/${stateInfo.code.toLowerCase()}/no-receipt`}
           className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium hover:bg-green-200"
         >
           ✅ No Receipt Claims
         </Link>
         <Link
-          href={`/us/${stateInfo.code.toLowerCase()}/paypal`}
+          href={`/claim/${stateInfo.code.toLowerCase()}/paypal`}
           className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-200"
         >
           💳 PayPal Claims
         </Link>
         <Link
-          href={`/us/${stateInfo.code.toLowerCase()}/highest-paying`}
+          href={`/claim/${stateInfo.code.toLowerCase()}/highest-paying`}
           className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium hover:bg-purple-200"
         >
           💰 Highest Paying
@@ -249,7 +249,7 @@ export default async function StatePage({
           return (
             <Link
               key={claim.id}
-              href={`/us/${claim.slug}`}
+              href={`/claim/${claim.slug}`}
               className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
             >
               <div className="flex items-start justify-between mb-3">
@@ -405,7 +405,7 @@ export default async function StatePage({
           {US_STATES.slice(0, 12).map((s) => (
             <Link
               key={s.code}
-              href={`/us/${s.code.toLowerCase()}`}
+              href={`/claim/${s.code.toLowerCase()}`}
               className={`px-3 py-2 rounded-lg text-sm font-medium text-center ${
                 s.code === stateInfo.code
                   ? "bg-blue-600 text-white"

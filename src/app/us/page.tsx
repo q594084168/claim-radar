@@ -174,7 +174,7 @@ export default function USClaimsPage() {
           return (
             <Link
               key={claim.id}
-              href={`/us/${claim.slug}`}
+              href={`/claim/${claim.slug}`}
               className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
             >
               <div className="flex items-start justify-between mb-3">
@@ -253,7 +253,7 @@ export default function USClaimsPage() {
           ].map((state) => (
             <Link
               key={state}
-              href={`/us/${state.toLowerCase()}`}
+              href={`/claim/${state.toLowerCase()}`}
               className="px-3 py-2 bg-white rounded-lg text-sm font-medium text-center hover:bg-gray-50"
             >
               {state}

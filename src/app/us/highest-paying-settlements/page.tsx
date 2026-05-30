@@ -164,7 +164,7 @@ export default function HighestPayingSettlementsPage() {
           return (
             <Link
               key={claim.id}
-              href={`/us/${claim.slug}`}
+              href={`/claim/${claim.slug}`}
               className="block bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
             >
               <div className="flex items-start gap-4">
