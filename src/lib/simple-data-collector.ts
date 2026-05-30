@@ -2,6 +2,8 @@
 // Focus on speed and reliability
 
 import { collectRealData } from "./real-data-collector";
+import { crawlClaimDepot } from "./data-acquisition/crawlers/claimdepot";
+import { convertToDatabaseFormat } from "./data-acquisition/orchestrator";
 import { generateFingerprint, ClaimFingerprint } from "./dedup";
 import { generateTags, ClaimTags } from "./auto-tag";
 import { calculateEnhancedScore, EnhancedScore } from "./enhanced-score";
@@ -140,16 +142,12 @@ function processClaim(rawClaim: any, source: string): SimpleClaim {
 }
 
 /**
- * Get ClaimDepot data (cached)
+ * Get ClaimDepot data (directly from crawler)
  */
 async function getClaimDepotData(): Promise<any[]> {
-  // Use pre-collected ClaimDepot data
-  // This would normally come from a database or cache
-  // For now, we'll use the API endpoint
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/crawl?source=claimdepot`);
-    const data = await response.json();
-    return data.data || [];
+    const cases = await crawlClaimDepot();
+    return cases.map(convertToDatabaseFormat);
   } catch (error) {
     console.error("Error fetching ClaimDepot data:", error);
     return [];
