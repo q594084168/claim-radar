@@ -1,0 +1,120 @@
+// ClaimRadar V1 Database Schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// CLAIMS - Core settlement/claim data
+// ============================================================
+model Claim {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  title         String
+  description   String?
+  country       String   // US, CA, AU
+  category      String   // data-breach, class-action, consumer-settlement
+
+  // Source information
+  sourceUrl     String?
+  sourceName    String?  // e.g., "TopClassActions", "Epiq", "Kroll"
+  officialUrl   String?  // Official settlement website
+
+  // Key dates
+  deadline      DateTime?
+  openDate      DateTime? // When claims open
+  payoutDate    DateTime? // Expected payout date
+
+  // Payout information
+  estimatedMin  Decimal? @db.Decimal(10, 2)
+  estimatedMax  Decimal? @db.Decimal(10, 2)
+  actualAvg     Decimal? @db.Decimal(10, 2) // User-reported average
+
+  // Requirements
+  needReceipt   Boolean  @default(false)
+  needPurchase  Boolean  @default(false)
+  needAccount   Boolean  @default(false)
+  accountType   String?  // facebook, google, etc.
+  needResidency Boolean  @default(false)
+
+  // Payment methods
+  payPaypal     Boolean  @default(false)
+  payVenmo      Boolean  @default(false)
+  payCheck      Boolean  @default(false)
+  payBank       Boolean  @default(false)
+  payEtransfer  Boolean  @default(false)
+
+  // Coverage
+  eligibleStates String[] // Empty = all states
+
+  // AI extracted data
+  aiSummary     String?
+  aiExtractedAt DateTime?
+  rawContent    String?  @db.Text
+
+  // Status
+  status        String   @default("active") // active, expired, pending, closed
+  isVerified    Boolean  @default(false)
+
+  // Scores
+  scorePayout   Int?     // 0-40
+  scoreDifficulty Int?   // 0-25
+  scoreCoverage Int?     // 0-15
+  scoreSpeed    Int?     // 0-10
+  scoreRisk     Int?     // 0-10
+  scoreTotal    Int?     // 0-100
+
+  // SEO
+  metaTitle     String?
+  metaDesc      String?
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  payouts       PayoutReport[]
+
+  @@index([country, category])
+  @@index([status, deadline])
+  @@index([scoreTotal(sort: Desc)])
+}
+
+// ============================================================
+// PAYOUT REPORTS - User-reported actual payouts
+// ============================================================
+model PayoutReport {
+  id            String   @id @default(cuid())
+  claimId       String
+  claim         Claim    @relation(fields: [claimId], references: [id])
+
+  amount        Decimal  @db.Decimal(10, 2)
+  receivedAt    DateTime
+  method        String?  // paypal, check, etc.
+  state         String?  // User's state
+  notes         String?
+
+  createdAt     DateTime @default(now())
+
+  @@index([claimId])
+}
+
+// ============================================================
+// CATEGORIES
+// ============================================================
+model Category {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  description   String?
+  country       String?  // null = all countries
+  claimCount    Int      @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
