@@ -12,6 +12,7 @@ const MOCK_CLAIMS = [
     estimatedMin: 40,
     estimatedMax: 150,
     needReceipt: true,
+    payPaypal: false,
     payEtransfer: true,
     scoreTotal: 72,
   },

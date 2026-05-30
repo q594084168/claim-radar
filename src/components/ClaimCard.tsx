@@ -10,7 +10,9 @@ interface ClaimCardProps {
     estimatedMin: number;
     estimatedMax: number;
     needReceipt: boolean;
-    payPaypal: boolean;
+    payPaypal?: boolean;
+    payBank?: boolean;
+    payCheck?: boolean;
     scoreTotal: number;
   };
   country?: string;

@@ -43,7 +43,7 @@ export function calculateClaimScore(input: ScoringInput): ClaimScore {
 }
 
 function calculatePayoutScore(min: number | null, max: number | null): number {
-  const avg = (min ?? 0 + max ?? 0) / 2;
+  const avg = ((min ?? 0) + (max ?? 0)) / 2;
 
   if (avg >= 100) return 40;
   if (avg >= 50) return 35;

@@ -2,7 +2,22 @@ import Link from "next/link";
 import { US_STATES } from "@/data/us-states";
 
 // Mock data for V1.5 - will be replaced with database queries
-const MOCK_CLAIMS = [
+const MOCK_CLAIMS: Array<{
+  id: string;
+  slug: string;
+  title: string;
+  country: string;
+  category: string;
+  deadline: string;
+  estimatedMin: number;
+  estimatedMax: number;
+  needReceipt: boolean;
+  payPaypal?: boolean;
+  payBank?: boolean;
+  payCheck?: boolean;
+  scoreTotal: number;
+  eligibleStates: string[];
+}> = [
   {
     id: "1",
     slug: "facebook-privacy-settlement",
