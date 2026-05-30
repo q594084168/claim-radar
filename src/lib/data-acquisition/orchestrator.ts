@@ -94,6 +94,7 @@ export async function runCrawler(
     kroll: crawlKroll,
     angeion: crawlAngeion,
     jnd: crawlJND,
+    claimdepot: crawlClaimDepot,
   };
 
   const crawl = crawlers[source.toLowerCase()];
