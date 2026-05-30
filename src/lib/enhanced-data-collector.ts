@@ -2,6 +2,7 @@
 // Integrates dedup, auto-tagging, and enhanced scoring
 
 import { collectRealData, RealClaim } from "./real-data-collector";
+import { runAllCrawlers, convertToDatabaseFormat } from "./data-acquisition/orchestrator";
 import { generateFingerprint, isDuplicate, ClaimFingerprint } from "./dedup";
 import { generateTags, ClaimTags } from "./auto-tag";
 import { calculateEnhancedScore, EnhancedScore } from "./enhanced-score";
@@ -38,9 +39,25 @@ const fingerprintCache = new Set<string>();
 export async function collectEnhancedData(): Promise<EnhancedClaim[]> {
   console.log("Starting enhanced data collection...");
 
-  // Step 1: Collect raw data
-  const rawData = await collectRealData();
-  console.log(`Raw data collected: ${rawData.length} claims`);
+  // Step 1: Collect raw data from RSS sources
+  const rssData = await collectRealData();
+  console.log(`RSS data collected: ${rssData.length} claims`);
+
+  // Step 2: Collect data from Claims Administrators (including ClaimDepot)
+  let adminData: any[] = [];
+  try {
+    const crawlResult = await runAllCrawlers();
+    adminData = crawlResult.results
+      .filter((r) => r.success)
+      .flatMap((r) => r.cases.map(convertToDatabaseFormat));
+    console.log(`Admin data collected: ${adminData.length} claims`);
+  } catch (error) {
+    console.error("Error crawling Claims Administrators:", error);
+  }
+
+  // Step 3: Combine all data
+  const rawData = [...rssData, ...adminData];
+  console.log(`Total raw data: ${rawData.length} claims`);
 
   // Step 2: Process each claim
   const enhancedClaims: EnhancedClaim[] = [];
