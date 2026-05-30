@@ -111,7 +111,7 @@ export default function HomePage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/enhanced-claims?limit=200");
+      const response = await fetch("/api/simple-claims?limit=200");
       const data = await response.json();
       if (data.success) {
         setAllClaims(data.claims);
