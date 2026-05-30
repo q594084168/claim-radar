@@ -21,7 +21,7 @@ const MOCK_CLAIMS: Record<string, any> = {
     accountType: "google",
     payPaypal: false,
     payCheck: true,
-    officialUrl: "https://www.googlelocationsharingsettlement.com",
+    officialUrl: "https://www.google.com/search?q=Google+Location+Tracking+Settlement+official+website",
     sourceName: "Angeion Group",
     scorePayout: 20,
     scoreDifficulty: 20,
@@ -39,7 +39,7 @@ const MOCK_CLAIMS: Record<string, any> = {
       "Must be a US resident",
     ],
     howToApply: [
-      "Visit the official settlement website",
+      "Search for the official settlement website using the link provided",
       "Fill out the claim form with your Google account information",
       "Provide your contact details and mailing address",
       "Submit the form before the deadline",
@@ -101,7 +101,7 @@ const MOCK_CLAIMS: Record<string, any> = {
     accountType: "facebook",
     payPaypal: true,
     payCheck: true,
-    officialUrl: "https://www.facebookbipaclassactionsettlement.com",
+    officialUrl: "https://www.google.com/search?q=Facebook+BIPA+Settlement+official+website",
     sourceName: "Epiq",
     scorePayout: 35,
     scoreDifficulty: 20,
@@ -119,7 +119,7 @@ const MOCK_CLAIMS: Record<string, any> = {
       "Must have used Facebook's facial recognition features",
     ],
     howToApply: [
-      "Visit the official settlement website",
+      "Search for the official settlement website using the link provided",
       "Fill out the claim form with your Facebook account information",
       "Provide proof of Illinois residency",
       "Submit the form before the deadline",
@@ -181,7 +181,7 @@ const MOCK_CLAIMS: Record<string, any> = {
     accountType: null,
     payPaypal: true,
     payCheck: true,
-    officialUrl: "https://www.tmobilesettlement.com",
+    officialUrl: "https://www.google.com/search?q=T-Mobile+Data+Breach+Settlement+official+website",
     sourceName: "Kroll",
     scorePayout: 30,
     scoreDifficulty: 25,
@@ -198,7 +198,7 @@ const MOCK_CLAIMS: Record<string, any> = {
       "Must be a US resident",
     ],
     howToApply: [
-      "Visit the official settlement website",
+      "Search for the official settlement website using the link provided",
       "Fill out the claim form with your contact information",
       "Provide your T-Mobile account information (if applicable)",
       "Submit the form before the deadline",
@@ -260,7 +260,7 @@ const MOCK_CLAIMS: Record<string, any> = {
     accountType: null,
     payPaypal: false,
     payBank: true,
-    officialUrl: "https://www.capitalonesettlement.com",
+    officialUrl: "https://www.google.com/search?q=Capital+One+Data+Breach+Settlement+official+website",
     sourceName: "JND Legal Administration",
     scorePayout: 40,
     scoreDifficulty: 25,
@@ -277,7 +277,7 @@ const MOCK_CLAIMS: Record<string, any> = {
       "Must be a US resident",
     ],
     howToApply: [
-      "Visit the official settlement website",
+      "Search for the official settlement website using the link provided",
       "Fill out the claim form with your contact information",
       "Provide your Capital One account information (if applicable)",
       "Submit the form before the deadline",
@@ -339,7 +339,7 @@ const MOCK_CLAIMS: Record<string, any> = {
     accountType: null,
     payPaypal: false,
     payCheck: true,
-    officialUrl: "https://www.equifaxbreachsettlement.com",
+    officialUrl: "https://www.google.com/search?q=Equifax+Data+Breach+Settlement+official+website",
     sourceName: "Epiq",
     scorePayout: 30,
     scoreDifficulty: 25,
@@ -356,7 +356,7 @@ const MOCK_CLAIMS: Record<string, any> = {
       "Must be a US resident",
     ],
     howToApply: [
-      "Visit the official settlement website",
+      "Search for the official settlement website using the link provided",
       "Fill out the claim form with your contact information",
       "Provide proof of identity",
       "Submit the form before the deadline",
@@ -711,11 +711,16 @@ export default async function ClaimDetailPage({
               rel="noopener noreferrer"
               className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 mb-4"
             >
-              Apply on Official Site →
+              Find Official Website →
             </a>
-            <p className="text-xs text-gray-500 text-center">
-              You'll be taken to the official settlement website
+            <p className="text-xs text-gray-500 text-center mb-4">
+              Search for the official settlement website
             </p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-xs text-yellow-800">
+                <strong>⚠️ Important:</strong> Always verify you're on the official settlement website before submitting personal information. Look for .gov or official settlement administrator domains.
+              </p>
+            </div>
 
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h4 className="font-medium text-gray-900 mb-3">Quick Facts</h4>
