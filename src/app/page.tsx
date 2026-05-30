@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import { analyzeClaim, ClaimAnalysis } from "@/lib/claim-analyzer";
 
 interface Claim {
   id: string;
@@ -25,6 +26,7 @@ interface Claim {
   tags: {
     tags: string[];
   };
+  analysis?: ClaimAnalysis;
 }
 
 interface Stats {
@@ -100,6 +102,7 @@ export default function HomePage() {
   const [selectedReceipt, setSelectedReceipt] = useState("all");
   const [selectedValue, setSelectedValue] = useState("all");
   const [selectedPayment, setSelectedPayment] = useState("all");
+  const [selectedType, setSelectedType] = useState("all"); // all, actionable, news
 
   useEffect(() => {
     fetchData();
@@ -122,38 +125,68 @@ export default function HomePage() {
     }
   };
 
-  // Filtered claims
+  // Filtered claims with analysis
   const filteredClaims = useMemo(() => {
-    return allClaims.filter((claim) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const titleMatch = claim.title?.toLowerCase().includes(query);
-        const descMatch = claim.description?.toLowerCase().includes(query);
-        if (!titleMatch && !descMatch) return false;
-      }
+    return allClaims
+      .map((claim) => ({
+        ...claim,
+        analysis: analyzeClaim({
+          title: claim.title,
+          description: claim.description,
+          officialUrl: claim.officialUrl,
+          deadline: claim.deadline,
+          estimatedMin: claim.estimatedMin,
+          estimatedMax: claim.estimatedMax,
+          tags: claim.tags?.tags || [],
+        }),
+      }))
+      .filter((claim) => {
+        // Search filter
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          const titleMatch = claim.title?.toLowerCase().includes(query);
+          const descMatch = claim.description?.toLowerCase().includes(query);
+          if (!titleMatch && !descMatch) return false;
+        }
 
-      // Receipt filter
-      if (selectedReceipt === "no-receipt" && claim.needReceipt) return false;
-      if (selectedReceipt === "receipt" && !claim.needReceipt) return false;
+        // Type filter (actionable/news)
+        if (selectedType === "actionable" && claim.analysis.category !== "actionable") return false;
+        if (selectedType === "news" && claim.analysis.category !== "news") return false;
 
-      // Value filter
-      const maxPayout = claim.estimatedMax || 0;
-      if (selectedValue === "high" && maxPayout < 500) return false;
-      if (selectedValue === "medium" && (maxPayout < 100 || maxPayout >= 500)) return false;
-      if (selectedValue === "low" && maxPayout >= 100) return false;
+        // Receipt filter
+        if (selectedReceipt === "no-receipt" && claim.needReceipt) return false;
+        if (selectedReceipt === "receipt" && !claim.needReceipt) return false;
 
-      // Payment filter
-      if (selectedPayment === "paypal" && !claim.payPaypal) return false;
-      if (selectedPayment === "check" && !claim.payCheck) return false;
-      if (selectedPayment === "bank" && !claim.payBank) return false;
+        // Value filter
+        const maxPayout = claim.estimatedMax || 0;
+        if (selectedValue === "high" && maxPayout < 500) return false;
+        if (selectedValue === "medium" && (maxPayout < 100 || maxPayout >= 500)) return false;
+        if (selectedValue === "low" && maxPayout >= 100) return false;
 
-      return true;
-    });
-  }, [allClaims, searchQuery, selectedReceipt, selectedValue, selectedPayment]);
+        // Payment filter
+        if (selectedPayment === "paypal" && !claim.payPaypal) return false;
+        if (selectedPayment === "check" && !claim.payCheck) return false;
+        if (selectedPayment === "bank" && !claim.payBank) return false;
 
-  // Stats
+        return true;
+      });
+  }, [allClaims, searchQuery, selectedType, selectedReceipt, selectedValue, selectedPayment]);
+
+  // Stats with analysis
   const stats = useMemo(() => {
+    const analyzed = allClaims.map((c) => ({
+      ...c,
+      analysis: analyzeClaim({
+        title: c.title,
+        description: c.description,
+        officialUrl: c.officialUrl,
+        deadline: c.deadline,
+        estimatedMin: c.estimatedMin,
+        estimatedMax: c.estimatedMax,
+        tags: c.tags?.tags || [],
+      }),
+    }));
+
     return {
       total: allClaims.length,
       noReceiptCount: allClaims.filter((c) => !c.needReceipt).length,
@@ -161,6 +194,9 @@ export default function HomePage() {
       avgScore: allClaims.length > 0
         ? Math.round(allClaims.reduce((sum, c) => sum + (c.score?.total || 0), 0) / allClaims.length)
         : 0,
+      actionableCount: analyzed.filter((c) => c.analysis.category === "actionable").length,
+      newsCount: analyzed.filter((c) => c.analysis.category === "news").length,
+      unknownCount: analyzed.filter((c) => c.analysis.category === "unknown").length,
     };
   }, [allClaims]);
 
@@ -178,9 +214,10 @@ export default function HomePage() {
     setSelectedReceipt("all");
     setSelectedValue("all");
     setSelectedPayment("all");
+    setSelectedType("all");
   };
 
-  const hasActiveFilters = searchQuery || selectedState || selectedReceipt !== "all" || selectedValue !== "all" || selectedPayment !== "all";
+  const hasActiveFilters = searchQuery || selectedState || selectedReceipt !== "all" || selectedValue !== "all" || selectedPayment !== "all" || selectedType !== "all";
 
   if (loading) {
     return (
@@ -222,20 +259,20 @@ export default function HomePage() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-lg shadow p-4 text-center">
-          <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-          <div className="text-xs text-gray-500">Total Claims</div>
+          <div className="text-2xl font-bold text-green-600">{stats.actionableCount}</div>
+          <div className="text-xs text-gray-500">✅ Can Apply</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
-          <div className="text-2xl font-bold text-green-600">{stats.noReceiptCount}</div>
+          <div className="text-2xl font-bold text-blue-600">{stats.newsCount}</div>
+          <div className="text-xs text-gray-500">📰 News Only</div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4 text-center">
+          <div className="text-2xl font-bold text-purple-600">{stats.noReceiptCount}</div>
           <div className="text-xs text-gray-500">No Receipt</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
-          <div className="text-2xl font-bold text-purple-600">{stats.highValueCount}</div>
+          <div className="text-2xl font-bold text-orange-600">{stats.highValueCount}</div>
           <div className="text-xs text-gray-500">High Value</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4 text-center">
-          <div className="text-2xl font-bold text-orange-600">{stats.avgScore}</div>
-          <div className="text-xs text-gray-500">Avg Score</div>
         </div>
       </div>
 
@@ -256,7 +293,21 @@ export default function HomePage() {
         </div>
 
         {/* Filter Dropdowns */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          {/* Type Filter */}
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
+            <select
+              value={selectedType}
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="all">All Types</option>
+              <option value="actionable">✅ Can Apply</option>
+              <option value="news">📰 News Only</option>
+            </select>
+          </div>
+
           {/* State Filter */}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">State</label>
@@ -384,9 +435,10 @@ export default function HomePage() {
 }
 
 // Claim Card Component
-function ClaimCard({ claim }: { claim: Claim }) {
+function ClaimCard({ claim }: { claim: Claim & { analysis?: ClaimAnalysis } }) {
   const maxPayout = claim.estimatedMax || 0;
   const isHighValue = maxPayout >= 500;
+  const analysis = claim.analysis;
 
   return (
     <div className={`bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-5 ${isHighValue ? "ring-2 ring-purple-200" : ""}`}>
@@ -397,6 +449,17 @@ function ClaimCard({ claim }: { claim: Claim }) {
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             {claim.sourceName}
           </span>
+          {analysis && (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+              analysis.category === "actionable"
+                ? "bg-green-100 text-green-800"
+                : analysis.category === "news"
+                ? "bg-gray-100 text-gray-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}>
+              {analysis.category === "actionable" ? "✅ Can Apply" : analysis.category === "news" ? "📰 News" : "❓ Unknown"}
+            </span>
+          )}
           {isHighValue && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
               💰 High Value
