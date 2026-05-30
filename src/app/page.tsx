@@ -124,15 +124,9 @@ export default function HomePage() {
         return;
       }
 
-      // Try preloaded data first (fastest)
-      let response = await fetch("/api/preloaded-data");
-      let data = await response.json();
-
-      // If no preloaded data, use static-data API
-      if (!data.success) {
-        response = await fetch("/api/static-data");
-        data = await response.json();
-      }
+      // Fetch from static-data API (cached on server)
+      const response = await fetch("/api/static-data");
+      const data = await response.json();
 
       if (data.success) {
         setAllClaims(data.claims);
