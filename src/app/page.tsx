@@ -112,21 +112,28 @@ export default function HomePage() {
     try {
       setLoading(true);
 
-      // Check localStorage cache first (1 hour)
+      // Check localStorage cache first (24 hours)
       const cached = localStorage.getItem("claimradar_data");
       const cacheTime = localStorage.getItem("claimradar_cache_time");
       const now = Date.now();
 
-      if (cached && cacheTime && (now - parseInt(cacheTime)) < 60 * 60 * 1000) {
+      if (cached && cacheTime && (now - parseInt(cacheTime)) < 24 * 60 * 60 * 1000) {
         console.log("Using cached data");
         setAllClaims(JSON.parse(cached));
         setLoading(false);
         return;
       }
 
-      // Fetch fresh data
-      const response = await fetch("/api/static-data");
-      const data = await response.json();
+      // Try preloaded data first (fastest)
+      let response = await fetch("/api/preloaded-data");
+      let data = await response.json();
+
+      // If no preloaded data, use static-data API
+      if (!data.success) {
+        response = await fetch("/api/static-data");
+        data = await response.json();
+      }
+
       if (data.success) {
         setAllClaims(data.claims);
         // Cache in localStorage
