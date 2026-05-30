@@ -203,8 +203,13 @@ export default function HomePage() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">{claim.sourceName}</span>
+              <div className="mt-4 pt-3 border-t border-gray-200">
+                <Link
+                  href={`/claim-detail/${claim.slug}`}
+                  className="w-full flex items-center justify-center px-3 py-2 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  View Details →
+                </Link>
               </div>
             </div>
           ))}
