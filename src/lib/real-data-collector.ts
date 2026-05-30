@@ -30,8 +30,18 @@ const RSS_SOURCES = [
     type: "rss",
   },
   {
-    name: "ClassAction.org",
-    url: "https://www.classaction.org/news/feed",
+    name: "TopClassActions-Atom",
+    url: "https://topclassactions.com/feed/atom/",
+    type: "atom",
+  },
+  {
+    name: "Google-News-Settlements",
+    url: "https://news.google.com/rss/search?q=class+action+settlement+claim",
+    type: "rss",
+  },
+  {
+    name: "Google-News-Data-Breach",
+    url: "https://news.google.com/rss/search?q=data+breach+settlement",
     type: "rss",
   },
 ];
