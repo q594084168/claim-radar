@@ -1,7 +1,6 @@
-// Simplified Data Collector - ClaimDepot + TopClassActions only
-// Focus on speed and reliability
+// Simplified Data Collector - ClaimDepot only
+// Focus on data quality and cleanliness
 
-import { collectRealData } from "./real-data-collector";
 import { crawlClaimDepot } from "./data-acquisition/crawlers/claimdepot";
 import { convertToDatabaseFormat } from "./data-acquisition/orchestrator";
 import { generateFingerprint, ClaimFingerprint } from "./dedup";
@@ -36,7 +35,7 @@ let lastFetchTime = 0;
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
 /**
- * Collect data from ClaimDepot and TopClassActions
+ * Collect data from ClaimDepot only
  */
 export async function collectSimpleData(): Promise<SimpleClaim[]> {
   const now = Date.now();
@@ -47,23 +46,10 @@ export async function collectSimpleData(): Promise<SimpleClaim[]> {
     return cachedClaims;
   }
 
-  console.log("Fetching fresh data...");
+  console.log("Fetching fresh data from ClaimDepot...");
   const allClaims: SimpleClaim[] = [];
 
-  // Source 1: TopClassActions RSS (fast)
-  try {
-    const rssData = await collectRealData();
-    console.log(`TopClassActions: ${rssData.length} claims`);
-
-    for (const claim of rssData) {
-      const processed = processClaim(claim, "TopClassActions");
-      allClaims.push(processed);
-    }
-  } catch (error) {
-    console.error("Error fetching TopClassActions:", error);
-  }
-
-  // Source 2: ClaimDepot (pre-collected data)
+  // Source: ClaimDepot (high quality, structured data)
   try {
     const claimDepotData = await getClaimDepotData();
     console.log(`ClaimDepot: ${claimDepotData.length} claims`);

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { collectRealData } from "@/lib/real-data-collector";
 import { crawlClaimDepot } from "@/lib/data-acquisition/crawlers/claimdepot";
 import { convertToDatabaseFormat } from "@/lib/data-acquisition/orchestrator";
 import { generateTags } from "@/lib/auto-tag";
@@ -21,21 +20,10 @@ async function getStaticData() {
     return staticData;
   }
 
-  console.log("Refreshing static data...");
+  console.log("Refreshing static data from ClaimDepot...");
   const allClaims: any[] = [];
 
-  // Source 1: TopClassActions RSS
-  try {
-    const rssData = await collectRealData();
-    console.log(`TopClassActions: ${rssData.length} claims`);
-    for (const claim of rssData) {
-      allClaims.push(processClaim(claim, "TopClassActions"));
-    }
-  } catch (error) {
-    console.error("Error fetching TopClassActions:", error);
-  }
-
-  // Source 2: ClaimDepot (limit to 100 for speed)
+  // Source: ClaimDepot (high quality, structured data)
   try {
     const claimDepotCases = await crawlClaimDepot();
     const claimDepotData = claimDepotCases.slice(0, 100).map(convertToDatabaseFormat);
