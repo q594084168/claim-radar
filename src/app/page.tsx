@@ -124,11 +124,11 @@ export default function HomePage() {
         return;
       }
 
-      // Fetch from pre-generated static data (instant)
-      const response = await fetch("/api/data");
+      // Fetch from static-data API (uses server-side cache)
+      const response = await fetch("/api/static-data");
       const data = await response.json();
 
-      if (data.success && data.claims.length > 0) {
+      if (data.success && data.claims && data.claims.length > 0) {
         setAllClaims(data.claims);
         // Cache in localStorage
         localStorage.setItem("claimradar_data", JSON.stringify(data.claims));

@@ -78,11 +78,11 @@ export default function DashboardPage() {
         return;
       }
 
-      // Fetch from API
-      const response = await fetch("/api/data");
+      // Fetch from static-data API
+      const response = await fetch("/api/static-data");
       const data = await response.json();
 
-      if (data.success && data.claims.length > 0) {
+      if (data.success && data.claims && data.claims.length > 0) {
         setClaims(data.claims);
         localStorage.setItem("claimradar_data", JSON.stringify(data.claims));
         localStorage.setItem("claimradar_cache_time", now.toString());
