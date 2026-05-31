@@ -15,12 +15,12 @@ export async function crawlClaimDepot(): Promise<ParsedCase[]> {
   const cases: ParsedCase[] = [];
 
   try {
-    // Step 1: Get settlement URLs from the main page
-    const settlementUrls = await getSettlementUrls();
-    console.log(`Found ${settlementUrls.length} settlement URLs from ClaimDepot`);
+    // Step 1: Get settlement URLs from sitemap (all 2301 URLs)
+    const settlementUrls = await getSettlementUrlsFromSitemap();
+    console.log(`Found ${settlementUrls.length} settlement URLs from ClaimDepot sitemap`);
 
-    // Step 2: Crawl each settlement page (limit to 50 for V1)
-    const urlsToCrawl = settlementUrls.slice(0, 50);
+    // Step 2: Crawl settlement pages (limit to 100 for speed, can be increased)
+    const urlsToCrawl = settlementUrls.slice(0, 100);
     console.log(`Crawling ${urlsToCrawl.length} settlement pages...`);
 
     for (const url of urlsToCrawl) {
@@ -36,6 +36,30 @@ export async function crawlClaimDepot(): Promise<ParsedCase[]> {
   } catch (error) {
     console.error("Error crawling ClaimDepot:", error);
     return cases;
+  }
+}
+
+/**
+ * Get settlement URLs from sitemap
+ */
+async function getSettlementUrlsFromSitemap(): Promise<string[]> {
+  try {
+    const response = await fetch("https://www.claimdepot.com/sitemap.xml");
+    const xml = await response.text();
+
+    // Extract settlement URLs from sitemap
+    const urlRegex = /https:\/\/www\.claimdepot\.com\/settlements\/[^<]+/g;
+    const urls: string[] = [];
+    let match;
+
+    while ((match = urlRegex.exec(xml)) !== null) {
+      urls.push(match[0]);
+    }
+
+    return urls;
+  } catch (error) {
+    console.error("Error fetching sitemap:", error);
+    return [];
   }
 }
 
