@@ -112,29 +112,29 @@ export default function HomePage() {
     try {
       setLoading(true);
 
-      // Check localStorage cache first (24 hours)
+      // Check localStorage cache first (7 days)
       const cached = localStorage.getItem("claimradar_data");
       const cacheTime = localStorage.getItem("claimradar_cache_time");
       const now = Date.now();
 
-      if (cached && cacheTime && (now - parseInt(cacheTime)) < 24 * 60 * 60 * 1000) {
+      if (cached && cacheTime && (now - parseInt(cacheTime)) < 7 * 24 * 60 * 60 * 1000) {
         console.log("Using cached data");
         setAllClaims(JSON.parse(cached));
         setLoading(false);
         return;
       }
 
-      // Fetch from static-data API (cached on server)
-      const response = await fetch("/api/static-data");
+      // Fetch from pre-generated static data (instant)
+      const response = await fetch("/api/data");
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.claims.length > 0) {
         setAllClaims(data.claims);
         // Cache in localStorage
         localStorage.setItem("claimradar_data", JSON.stringify(data.claims));
         localStorage.setItem("claimradar_cache_time", now.toString());
       } else {
-        setError("Failed to load data");
+        setError("No data available");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data");
