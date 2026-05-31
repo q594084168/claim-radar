@@ -124,8 +124,8 @@ export default function HomePage() {
         return;
       }
 
-      // Fetch from static-data API (uses server-side cache)
-      const response = await fetch("/api/static-data");
+      // Fetch from Supabase database (instant)
+      const response = await fetch("/api/supabase-direct?limit=200");
       const data = await response.json();
 
       if (data.success && data.claims && data.claims.length > 0) {
